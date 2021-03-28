@@ -83,15 +83,15 @@ class MailQueue extends \yii\db\ActiveRecord
     {
 
         try {
-            $mails = self::find()->where(['status' => self::STATUS_PENDING])->all();
+            $mails = self::find()->where(['!=','status',  self::STATUS_SENT])->all();
             if (!empty($mails)) {
                 foreach ($mails as $mail) {
                     $sender = EmailAccount::findByEmail($mail->from);
                     if($sender){
                         $params = $sender->params;
-                        var_dump($params);
                         $params['class'] = 'Swift_SmtpTransport';
                         Yii::$app->mailer->setTransport($params);
+
                         $message = Yii::$app->mailer->compose()
                             ->setFrom([$mail->from])
                             ->setTo(trim($mail->to))

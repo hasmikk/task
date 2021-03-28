@@ -10,7 +10,7 @@ class CronController extends Controller
 {
 
     /**
-     * Send emails in status pending
+     * Send emails
      */
 
     public function actionSendMail()
