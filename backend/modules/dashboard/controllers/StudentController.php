@@ -158,7 +158,7 @@ class StudentController extends Controller
                     Yii::$app->getSession()->setFlash('danger', 'Failed to process data!');
                 }
             } else {
-                Yii::$app->getSession()->setFlash('danger', 'No sender Email found!');
+                Yii::$app->getSession()->setFlash('danger', 'No Email sending account found!');
             }
 
             return $this->redirect(Yii::$app->request->referrer ?: Yii::$app->homeUrl);
