@@ -2,6 +2,7 @@
 
 namespace backend\modules\dashboard\controllers;
 
+use backend\modules\dashboard\models\EmailAccount;
 use common\models\search\SearchStudent;
 use common\models\Student;
 use Yii;
@@ -147,15 +148,21 @@ class StudentController extends Controller
             $subject = Yii::$app->request->post('subject');
             $body = Yii::$app->request->post('body');
             $mailTo = Yii::$app->request->post('email');
-            $mailFrom = Yii::$app->params['email'];
+            $sender = EmailAccount::getDefaultSender();
+            if (!empty($sender)) {
+                $mailFrom = $sender->email_address;
 
-            if ($model->sendMail($mailFrom, $mailTo, $subject, $body)) {
-                Yii::$app->getSession()->setFlash('success', 'Mail request sent!');
-            }else{
-                Yii::$app->getSession()->setFlash('danger', 'Failed to process data!');
+                if ($model->sendMail($mailFrom, $mailTo, $subject, $body)) {
+                    Yii::$app->getSession()->setFlash('success', 'Mail request sent!');
+                } else {
+                    Yii::$app->getSession()->setFlash('danger', 'Failed to process data!');
+                }
+            } else {
+                Yii::$app->getSession()->setFlash('danger', 'No sender Email found!');
             }
 
             return $this->redirect(Yii::$app->request->referrer ?: Yii::$app->homeUrl);
+
         }
 
 

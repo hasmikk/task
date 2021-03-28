@@ -81,28 +81,35 @@ class MailQueue extends \yii\db\ActiveRecord
 
     public static function sendFromQueue()
     {
-        $mails = self::find()->where(['status' => self::STATUS_PENDING])->all();
-        $params = Yii::$app->params['emailParams'];
-        $params['class'] = 'Swift_SmtpTransport';
 
-        Yii::$app->mailer->setTransport($params);
-        if (!empty($mails)) {
-            foreach ($mails as $mail) {
-                $message = Yii::$app->mailer->compose()
-                    ->setFrom([$mail->from])
-                    ->setTo(trim($mail->to))
-                    ->setSubject($mail->subject)
-                    ->setHtmlBody($mail->body);
+        try {
+            $mails = self::find()->where(['status' => self::STATUS_PENDING])->all();
+            if (!empty($mails)) {
+                foreach ($mails as $mail) {
+                    $sender = EmailAccount::findByEmail($mail->from);
+                    if($sender){
+                        $params = $sender->params;
+                        var_dump($params);
+                        $params['class'] = 'Swift_SmtpTransport';
+                        Yii::$app->mailer->setTransport($params);
+                        $message = Yii::$app->mailer->compose()
+                            ->setFrom([$mail->from])
+                            ->setTo(trim($mail->to))
+                            ->setSubject($mail->subject)
+                            ->setHtmlBody($mail->body);
 
-                if ($message->send()) {
-                    $mail->status = MailQueue::STATUS_SENT;
-                } else {
-                    $mail->status = MailQueue::STATUS_ERROR;
+                        if ($message->send()) {
+                            $mail->status = MailQueue::STATUS_SENT;
+                        } else {
+                            $mail->status = MailQueue::STATUS_ERROR;
+                        }
+                        $mail->updated_at = time();
+                        $mail->save();
+                    }
                 }
-                $mail->updated_at = time();
-                $mail->save();
-
             }
+        } catch (\Exception $e) {
+            echo $e->getMessage() . "\n";
         }
 
     }
